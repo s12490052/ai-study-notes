@@ -1,0 +1,51 @@
+name: Test and deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          version: "0.13.7"
+          python-version: "3.10"
+      - name: Sync locked environment
+        run: uv sync --locked
+      - name: Run unit and API tests (no model download needed)
+        run: uv run python -m unittest discover -s tests -v
+      - name: Verify static portfolio and captured model result
+        run: uv run python scripts/check_site.py
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload portfolio only
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
