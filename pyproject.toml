@@ -1,0 +1,10 @@
+[project]
+name = "ai-study-notes"
+version = "1.0.0"
+description = "Turn Chinese study materials into structured notes with local Ollama."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.uv]
+package = false
